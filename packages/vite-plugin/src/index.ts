@@ -24,10 +24,12 @@ export function mccPlugin(opts: MccPluginOptions = {}): Plugin {
     force = false,
   } = opts;
 
-  const commitSha = process.env['MCC_COMMIT'] || detectCommitSha();
+  const enabled = process.env['MCC_COVERAGE'] === 'true';
   const tester = process.env['MCC_TESTER'] ?? '';
   const endpoint = process.env['MCC_ENDPOINT'] ?? 'http://localhost:3000';
-  const enabled = process.env['MCC_COVERAGE'] === 'true';
+
+  // ?? (not ||) so that an explicit empty string is preserved and not replaced by git fallback
+  let commitSha = process.env['MCC_COMMIT'] ?? detectCommitSha();
 
   return {
     name: 'mcc',
