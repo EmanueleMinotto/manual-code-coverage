@@ -37,7 +37,7 @@ describe('mccPlugin', () => {
   it('does not instrument when MCC_COVERAGE is unset', () => {
     const plugin = getPlugin({});
     // @ts-expect-error — accessing plugin transform method directly for testing
-    const result = plugin.transform?.('const x = 1;', '/src/app.ts');
+    const result: unknown = plugin.transform?.('const x = 1;', '/src/app.ts');
     expect(result).toBeNull();
   });
 
@@ -46,7 +46,7 @@ describe('mccPlugin', () => {
     process.env['MCC_COMMIT'] = '';
     const plugin = mccPlugin();
     const mockConfig = { command: 'build' } as Parameters<
-      Extract<typeof plugin.configResolved, Function>
+      Extract<typeof plugin.configResolved, (...args: unknown[]) => unknown>
     >[0];
     expect(() => {
       (plugin.configResolved as (cfg: typeof mockConfig) => void)(mockConfig);
@@ -58,7 +58,7 @@ describe('mccPlugin', () => {
     process.env['MCC_COMMIT'] = 'abc123';
     const plugin = mccPlugin();
     const mockConfig = { command: 'serve' } as Parameters<
-      Extract<typeof plugin.configResolved, Function>
+      Extract<typeof plugin.configResolved, (...args: unknown[]) => unknown>
     >[0];
     expect(() => {
       (plugin.configResolved as (cfg: typeof mockConfig) => void)(mockConfig);

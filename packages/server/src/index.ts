@@ -1,7 +1,6 @@
-import fastify from 'fastify';
 import compress from '@fastify/compress';
-
 import type { StorageProvider } from '@manual-code-coverage/core';
+import fastify from 'fastify';
 
 import { registerRoutes } from './routes.js';
 
@@ -18,7 +17,7 @@ export async function createServer(opts: ServerOptions) {
     void reply.header('content-type', 'application/json; charset=utf-8');
   });
 
-  await registerRoutes(app, opts.storage);
+  registerRoutes(app, opts.storage);
   return app;
 }
 

@@ -43,7 +43,7 @@ describe('runReport', () => {
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => MOCK_MERGED,
+        json: () => Promise.resolve(MOCK_MERGED),
       }),
     );
 

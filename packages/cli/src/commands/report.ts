@@ -1,12 +1,12 @@
 import { mkdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
+import type { MergedCoverage } from '@manual-code-coverage/core';
+import { loadMccConfig } from '@manual-code-coverage/core';
 import libCoverage from 'istanbul-lib-coverage';
 import libReport from 'istanbul-lib-report';
 import reports from 'istanbul-reports';
 
-import type { MergedCoverage } from '@manual-code-coverage/core';
-import { loadMccConfig } from '@manual-code-coverage/core';
 
 export interface ReportOptions {
   endpoint?: string;

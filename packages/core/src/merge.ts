@@ -3,7 +3,7 @@ import { createCoverageMap } from 'istanbul-lib-coverage';
 import type { RawCoverageMap, Session, ContributorsMap } from './types.js';
 
 export function mergeCoverage(base: RawCoverageMap, delta: RawCoverageMap): RawCoverageMap {
-  const map = createCoverageMap(JSON.parse(JSON.stringify(base)) as RawCoverageMap);
+  const map = createCoverageMap(structuredClone(base));
   map.merge(delta);
   return map.toJSON();
 }
@@ -24,7 +24,7 @@ export function buildContributorsMap(sessions: readonly Session[]): Contributors
       if (!result[filePath]) {
         result[filePath] = {};
       }
-      const fileContributors = result[filePath]!;
+      const fileContributors = result[filePath];
       const fc = createCoverageMap({ [filePath]: fileCoverage }).fileCoverageFor(filePath);
 
       for (const [stmtId, hitCount] of Object.entries(fc.s)) {
@@ -46,7 +46,7 @@ export function buildContributorsMap(sessions: readonly Session[]): Contributors
   for (const [filePath, lineMap] of Object.entries(result)) {
     serialized[filePath] = {};
     for (const [line, testers] of Object.entries(lineMap)) {
-      serialized[filePath]![Number(line)] = [...testers].sort();
+      serialized[filePath][Number(line)] = [...testers].sort();
     }
   }
   return serialized;

@@ -2,11 +2,12 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import type { FastifyInstance } from 'fastify';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-import { createServer } from './index.js';
 import { FilesystemProvider } from './storage/FilesystemProvider.js';
-import type { FastifyInstance } from 'fastify';
+
+import { createServer } from './index.js';
 
 let tmpDir: string;
 let server: FastifyInstance;

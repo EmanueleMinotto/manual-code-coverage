@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn().mockImplementation(() => ({
@@ -70,7 +70,7 @@ afterEach(() => {
 
 describe('runVerifyPr', () => {
   it('returns pass when all modified lines are covered', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => FULL_MERGED }));
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(FULL_MERGED) }));
 
     const result = await runVerifyPr(42, { ...COMMON_OPTS, threshold: 1.0 });
 
@@ -81,7 +81,7 @@ describe('runVerifyPr', () => {
   });
 
   it('returns fail when a line is not covered', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => PARTIAL_MERGED }));
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(PARTIAL_MERGED) }));
 
     const result = await runVerifyPr(42, { ...COMMON_OPTS, threshold: 1.0 });
 
@@ -99,7 +99,7 @@ describe('runVerifyPr', () => {
   });
 
   it('threshold boundary: pass at exact threshold', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => HALF_MERGED }));
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(HALF_MERGED) }));
 
     const result = await runVerifyPr(42, { ...COMMON_OPTS, threshold: 0.5 });
 

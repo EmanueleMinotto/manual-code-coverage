@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto';
 
-import type { FastifyInstance } from 'fastify';
 
 import type {
   StorageProvider,
@@ -9,13 +8,14 @@ import type {
   Session,
 } from '@manual-code-coverage/core';
 import { buildContributorsMap, mergeCoverageMaps } from '@manual-code-coverage/core';
+import type { FastifyInstance } from 'fastify';
 
 import { AppendDeltaBodySchema, CreateSessionBodySchema } from './schemas.js';
 
-export async function registerRoutes(
+export function registerRoutes(
   app: FastifyInstance,
   storage: StorageProvider,
-): Promise<void> {
+): void {
   app.post('/sessions', async (request, reply) => {
     const parsed = CreateSessionBodySchema.safeParse(request.body);
     if (!parsed.success) {

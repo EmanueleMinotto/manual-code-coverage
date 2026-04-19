@@ -1,7 +1,7 @@
-import { Octokit } from '@octokit/rest';
 
 import type { MergedCoverage, UncoveredFile, VerificationResult } from '@manual-code-coverage/core';
 import { loadMccConfig } from '@manual-code-coverage/core';
+import { Octokit } from '@octokit/rest';
 
 import { parseChangedFiles } from '../diff-parser.js';
 
