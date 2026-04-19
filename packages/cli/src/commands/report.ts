@@ -29,7 +29,10 @@ export async function runReport(commitSha: string, opts: ReportOptions = {}): Pr
   }
 
   const merged: MergedCoverage = (await res.json()) as MergedCoverage;
-  const coverageMap = libCoverage.createCoverageMap(merged.coverage);
+  const filteredCoverage = Object.fromEntries(
+    Object.entries(merged.coverage).filter(([key]) => !key.includes('\x00')),
+  );
+  const coverageMap = libCoverage.createCoverageMap(filteredCoverage);
 
   await mkdir(outputDir, { recursive: true });
 

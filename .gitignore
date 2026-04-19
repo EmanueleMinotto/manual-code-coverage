@@ -6,3 +6,4 @@ coverage/
 data/
 .env
 .env.local
+coverage-report/

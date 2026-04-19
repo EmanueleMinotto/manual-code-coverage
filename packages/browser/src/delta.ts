@@ -1,7 +1,12 @@
 type FileCoverage = {
+  path?: string;
   s: Record<string, number>;
   f: Record<string, number>;
   b: Record<string, number[]>;
+  statementMap?: Record<string, unknown>;
+  fnMap?: Record<string, unknown>;
+  branchMap?: Record<string, unknown>;
+  [key: string]: unknown;
 };
 
 type CoverageMap = Record<string, FileCoverage>;
@@ -49,7 +54,7 @@ export function computeDelta(
     }
 
     if (hasChange) {
-      delta[file] = fileDelta;
+      delta[file] = { ...curr, ...fileDelta };
     }
   }
 
