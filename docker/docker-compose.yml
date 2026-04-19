@@ -1,0 +1,14 @@
+services:
+  mcc-server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      PORT: "3000"
+      HOST: "0.0.0.0"
+      MCC_DATA_DIR: /app/data
+    restart: unless-stopped

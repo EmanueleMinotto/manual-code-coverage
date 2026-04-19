@@ -1,0 +1,29 @@
+{
+  "name": "@manual-code-coverage/browser",
+  "version": "0.1.0",
+  "description": "Browser runtime client for manual-code-coverage: reads window.__coverage__, buffers via Web Worker + IndexedDB, sends deltas to server",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@manual-code-coverage/core": "workspace:*",
+    "idb": "^8.0.2"
+  },
+  "devDependencies": {
+    "happy-dom": "^17.4.4"
+  }
+}

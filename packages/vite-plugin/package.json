@@ -1,0 +1,33 @@
+{
+  "name": "@manual-code-coverage/vite-plugin",
+  "version": "0.1.0",
+  "description": "Vite plugin for build-time Istanbul instrumentation and MCC config injection",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@babel/core": "^7.27.1",
+    "babel-plugin-istanbul": "^7.0.0"
+  },
+  "peerDependencies": {
+    "vite": ">=5.0.0"
+  },
+  "devDependencies": {
+    "vite": "^6.3.3",
+    "@types/babel__core": "^7.20.5"
+  }
+}

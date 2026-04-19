@@ -1,0 +1,36 @@
+{
+  "name": "@manual-code-coverage/server",
+  "version": "0.1.0",
+  "description": "Fastify HTTP server for manual-code-coverage with pluggable StorageProvider",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "bin": {
+    "mcc-server": "./dist/bin.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@fastify/compress": "^8.0.1",
+    "@manual-code-coverage/core": "workspace:*",
+    "fastify": "^5.3.2",
+    "nanoid": "^5.1.5",
+    "p-queue": "^8.1.0",
+    "zod": "^3.24.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0"
+  }
+}
