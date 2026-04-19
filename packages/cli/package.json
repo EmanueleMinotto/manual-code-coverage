@@ -18,6 +18,7 @@
   },
   "scripts": {
     "build": "tsup",
+    "start": "node ./dist/bin.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "lint": "eslint src"

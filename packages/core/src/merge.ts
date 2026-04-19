@@ -1,4 +1,6 @@
-import { createCoverageMap } from 'istanbul-lib-coverage';
+import libCoverage from 'istanbul-lib-coverage';
+
+const { createCoverageMap } = libCoverage;
 
 import type { RawCoverageMap, Session, ContributorsMap } from './types.js';
 

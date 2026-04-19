@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process';
 import { transformSync } from '@babel/core';
 import type { Plugin } from 'vite';
 
@@ -7,6 +8,14 @@ export interface MccPluginOptions {
   force?: boolean;
 }
 
+function detectCommitSha(): string {
+  try {
+    return execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
+  } catch {
+    return '';
+  }
+}
+
 export function mccPlugin(opts: MccPluginOptions = {}): Plugin {
   const {
     include = [],
@@ -14,7 +23,7 @@ export function mccPlugin(opts: MccPluginOptions = {}): Plugin {
     force = false,
   } = opts;
 
-  const commitSha = process.env['MCC_COMMIT'] ?? '';
+  const commitSha = process.env['MCC_COMMIT'] || detectCommitSha();
   const tester = process.env['MCC_TESTER'] ?? '';
   const endpoint = process.env['MCC_ENDPOINT'] ?? 'http://localhost:3000';
   const enabled = process.env['MCC_COVERAGE'] === 'true';
@@ -33,7 +42,7 @@ export function mccPlugin(opts: MccPluginOptions = {}): Plugin {
 
       if (!commitSha) {
         throw new Error(
-          'MCC: MCC_COMMIT env var is required when MCC_COVERAGE=true.',
+          'MCC: MCC_COMMIT env var is required when MCC_COVERAGE=true (and git is not available).',
         );
       }
     },
@@ -53,6 +62,7 @@ export function mccPlugin(opts: MccPluginOptions = {}): Plugin {
       if (!enabled) return null;
       if (id.includes('node_modules')) return null;
       if (id.includes('.test.') || id.includes('.spec.')) return null;
+      if (!/\.[jt]sx?$/.test(id)) return null;
 
       const shouldInclude =
         include.length === 0 || include.some((pattern) => id.includes(pattern));
