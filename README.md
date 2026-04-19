@@ -15,6 +15,10 @@ examples/
   vite-react-app/ — minimal example wired up end-to-end
 ```
 
+## Example
+
+See [examples/vite-react-app/README.md](examples/vite-react-app/README.md) for a complete end-to-end walkthrough.
+
 ## Quickstart (Docker Compose)
 
 ```bash

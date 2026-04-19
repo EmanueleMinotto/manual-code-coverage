@@ -37,6 +37,10 @@ Both must pass with no errors. Typecheck is also recommended:
 pnpm typecheck
 ```
 
+## Changelog
+
+This project follows [Keep a Changelog](https://keepachangelog.com/) format. When adding a meaningful change, update [CHANGELOG.md](CHANGELOG.md) under the `[Unreleased]` section using the appropriate category (`Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`).
+
 ## Pull requests
 
 - Keep PRs focused on a single change
