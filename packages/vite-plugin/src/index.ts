@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process';
+
 import { transformSync } from '@babel/core';
 import type { Plugin } from 'vite';
 
