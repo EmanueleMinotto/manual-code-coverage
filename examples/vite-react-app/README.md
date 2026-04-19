@@ -1,65 +1,65 @@
-# vite-react-app — esempio manuale
+# vite-react-app — manual example
 
-App React minimale per testare `manual-code-coverage` end-to-end in locale.
+Minimal React app to test `manual-code-coverage` end-to-end locally.
 
-## Prerequisiti
+## Prerequisites
 
 - Node.js ≥ 20
 - pnpm ≥ 9
 
-## Avvio rapido
+## Quick start
 
-Dalla **root del monorepo**:
+From the **monorepo root**:
 
 ```bash
 pnpm install
 pnpm build
 ```
 
-### 1. Avvia il server MCC
+### 1. Start the MCC server
 
 ```bash
 pnpm --filter @manual-code-coverage/server run start
 ```
 
-Il server ascolta su `http://localhost:3000` per default.
+The server listens on `http://localhost:3000` by default.
 
-### 2. Avvia l'app con strumentazione
+### 2. Start the app with instrumentation
 
 ```bash
 pnpm --filter vite-react-app-example build:coverage
 pnpm --filter vite-react-app-example preview
 ```
 
-`build:coverage` abilita la variabile `MCC_COVERAGE=true` che attiva il plugin Vite (`mccPlugin`), strumentando il codice con Istanbul a build time.
+`build:coverage` sets `MCC_COVERAGE=true`, which activates the Vite plugin (`mccPlugin`) and instruments the code with Istanbul at build time.
 
-### 3. Esercita il codice
+### 3. Exercise the code
 
-Apri `http://localhost:4173` nel browser ed esegui le azioni da coprire.  
-Il client `MccClient` (inizializzato in `src/main.tsx`) raccoglie i dati e li invia al server a ogni interazione.
+Open `http://localhost:4173` in your browser and perform the actions you want to cover.  
+The `MccClient` (initialised in `src/main.tsx`) collects coverage data and sends it to the server on every interaction.
 
-### 4. Scarica il report
+### 4. Download the report
 
 ```bash
 pnpm --filter @manual-code-coverage/cli run start -- report <commit-sha> --output coverage/
 ```
 
-Il report HTML viene generato in `coverage/index.html`.
+The HTML report is generated at `coverage/index.html`.
 
-## Variabili d'ambiente
+## Environment variables
 
-| Variabile | Default | Descrizione |
+| Variable | Default | Description |
 |---|---|---|
-| `MCC_COVERAGE` | `false` | Abilita la strumentazione del build |
-| `MCC_SERVER_URL` | `http://localhost:3000` | URL del server MCC |
+| `MCC_COVERAGE` | `false` | Enables build instrumentation |
+| `MCC_SERVER_URL` | `http://localhost:3000` | MCC server URL |
 
-## Struttura
+## Structure
 
 ```
 examples/vite-react-app/
 ├── src/
-│   └── main.tsx        # entry point, inizializza MccClient
-├── vite.config.ts      # usa mccPlugin()
+│   └── main.tsx        # entry point, initialises MccClient
+├── vite.config.ts      # uses mccPlugin()
 ├── index.html
 └── package.json
 ```
