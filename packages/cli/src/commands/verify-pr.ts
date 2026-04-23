@@ -76,13 +76,17 @@ export async function runVerifyPr(
     const uncoveredLines: number[] = [];
 
     for (const line of addedLines) {
-      totalModifiedLines++;
-
       if (!fileCov) {
+        totalModifiedLines++;
         uncoveredLines.push(line);
         continue;
       }
 
+      // Istanbul skips non-executable lines (import/export/type declarations, blank lines, etc.)
+      // Lines absent from statementMap are not instrumentable — exclude from the count entirely.
+      if (!isLineInstrumentable(fileCov, line)) continue;
+
+      totalModifiedLines++;
       const isCovered = isLineCovered(fileCov, line);
       if (isCovered) {
         coveredModifiedLines++;
@@ -115,12 +119,16 @@ export async function runVerifyPr(
   return result;
 }
 
-/**
- * Returns true if covered, false if instrumentable but not covered.
- * Lines absent from statementMap (imports, type declarations, blank lines) are
- * considered covered when the file has any coverage data — the module loaded,
- * so those lines ran.
- */
+function isLineInstrumentable(
+  fileCov: { statementMap?: Record<string, { start: { line: number }; end: { line: number } }> },
+  line: number,
+): boolean {
+  if (!fileCov.statementMap) return false;
+  return Object.values(fileCov.statementMap).some(
+    (loc) => loc.start.line <= line && line <= loc.end.line,
+  );
+}
+
 function isLineCovered(
   fileCov: { statementMap?: Record<string, { start: { line: number }; end: { line: number } }>; s?: Record<string, number> },
   line: number,
@@ -134,9 +142,7 @@ function isLineCovered(
     }
   }
 
-  // Not in statementMap: not instrumentable by Istanbul. The module loaded
-  // (we have coverage data), so treat as covered.
-  return true;
+  return false;
 }
 
 function linesToRanges(lines: readonly number[]): string {
