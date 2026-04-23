@@ -29,6 +29,39 @@ jobs:
 
       - run: pnpm test
 
+  e2e:
+    runs-on: ubuntu-latest
+    needs: ci
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm build
+
+      - name: Install Playwright browsers
+        run: pnpm --filter vite-react-app-example exec playwright install chromium --with-deps
+
+      - name: Build example with coverage
+        working-directory: examples/vite-react-app
+        env:
+          MCC_COMMIT: ${{ github.sha }}
+          MCC_TESTER: ci-playwright
+        run: pnpm build:coverage:ci
+
+      - name: Run Playwright e2e tests
+        working-directory: examples/vite-react-app
+        env:
+          CI: 'true'
+        run: pnpm test:e2e
+
   docker:
     runs-on: ubuntu-latest
     needs: ci
