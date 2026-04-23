@@ -32,6 +32,7 @@ export class MccClient {
       // Worker unavailable — continue without IDB buffering
     }
 
+    void this.flush();
     this.intervalId = setInterval(() => { void this.flush(); }, flushIntervalMs);
 
     window.addEventListener('beforeunload', () => { this.flushBeacon(); });

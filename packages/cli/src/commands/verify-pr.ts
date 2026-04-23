@@ -67,8 +67,12 @@ export async function runVerifyPr(
   let coveredModifiedLines = 0;
   const uncoveredFiles: UncoveredFile[] = [];
 
+  const coverageEntries = Object.entries(merged.coverage);
+
   for (const { path, addedLines } of changedFiles) {
-    const fileCov = merged.coverage[path];
+    const fileCov =
+      merged.coverage[path] ??
+      coverageEntries.find(([k]) => k.endsWith(`/${path}`))?.[1];
     const uncoveredLines: number[] = [];
 
     for (const line of addedLines) {

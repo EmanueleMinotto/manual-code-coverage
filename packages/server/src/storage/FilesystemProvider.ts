@@ -163,7 +163,8 @@ export class FilesystemProvider implements StorageProvider {
   }
 
   async getMergedCoverage(commitSha: string): Promise<MergedCoverage | null> {
-    return this.readJson<MergedCoverage>(this.mergedPath(commitSha));
+    const resolved = await this.resolveCommitSha(commitSha);
+    return this.readJson<MergedCoverage>(this.mergedPath(resolved));
   }
 
   async setMergedCoverage(coverage: MergedCoverage): Promise<void> {
@@ -183,9 +184,26 @@ export class FilesystemProvider implements StorageProvider {
     });
   }
 
+  private async resolveCommitSha(commitSha: string): Promise<string> {
+    const { readdir } = await import('node:fs/promises');
+    const commitsDir = join(this.dataDir, 'commits');
+    let entries: string[];
+    try {
+      entries = await readdir(commitsDir);
+    } catch {
+      return commitSha;
+    }
+    if (entries.includes(commitSha)) return commitSha;
+    const match = entries.find(
+      (e) => e.startsWith(commitSha) || commitSha.startsWith(e),
+    );
+    return match ?? commitSha;
+  }
+
   async listSessionsForCommit(commitSha: string): Promise<readonly Session[]> {
     const { readdir } = await import('node:fs/promises');
-    const sessionsDir = join(this.dataDir, 'commits', commitSha, 'sessions');
+    const resolved = await this.resolveCommitSha(commitSha);
+    const sessionsDir = join(this.dataDir, 'commits', resolved, 'sessions');
     let files: string[];
     try {
       files = await readdir(sessionsDir);
