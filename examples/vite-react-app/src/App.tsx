@@ -3,6 +3,16 @@ import React, { useState } from 'react';
 import { calculate, type Operation } from './utils/calculator';
 import { decrement, double, increment, reset } from './utils/counter';
 import { countVowels, isPalindrome, reverse, toUpperCase } from './utils/strings';
+import {
+  getPasswordStrength,
+  validateEmail,
+  validatePassword,
+  validatePasswordConfirm,
+  validateRegistrationForm,
+  validateUsername,
+  type RegistrationData,
+  type RegistrationErrors,
+} from './utils/validator';
 
 const sectionStyle: React.CSSProperties = {
   border: '1px solid #d0d0d0',
@@ -54,6 +64,41 @@ export function App() {
   // Strings
   const [strInput, setStrInput] = useState('Istanbul');
   const [strResult, setStrResult] = useState<string | null>(null);
+
+  // Registration form
+  const [regData, setRegData] = useState<RegistrationData>({
+    email: '', username: '', password: '', confirmPassword: '',
+  });
+  const [touched, setTouched] = useState<Partial<Record<keyof RegistrationData, boolean>>>({});
+  const [regErrors, setRegErrors] = useState<RegistrationErrors>({});
+  const [regSubmitted, setRegSubmitted] = useState(false);
+
+  const fieldValidators: Record<keyof RegistrationData, (d: RegistrationData) => string | null> = {
+    email: (d) => validateEmail(d.email),
+    username: (d) => validateUsername(d.username),
+    password: (d) => validatePassword(d.password),
+    confirmPassword: (d) => validatePasswordConfirm(d.password, d.confirmPassword),
+  };
+
+  const handleRegChange = (field: keyof RegistrationData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newData = { ...regData, [field]: e.target.value };
+    setRegData(newData);
+    setTouched((t) => ({ ...t, [field]: true }));
+    const err = fieldValidators[field]!(newData);
+    setRegErrors((prev: RegistrationErrors) => {
+      const next = { ...prev };
+      if (err !== null) next[field] = err;
+      else delete next[field];
+      return next;
+    });
+  };
+
+  const handleRegSubmit = () => {
+    const errors = validateRegistrationForm(regData);
+    setRegErrors(errors);
+    setTouched({ email: true, username: true, password: true, confirmPassword: true });
+    setRegSubmitted(Object.keys(errors).length === 0);
+  };
 
   return (
     <div style={{ maxWidth: 640, margin: '2rem auto', fontFamily: 'system-ui, sans-serif', padding: '0 1rem' }}>
@@ -123,6 +168,63 @@ export function App() {
         <button style={btnStyle} onClick={() => setStrResult(String(countVowels(strInput)) + ' vocali')}>countVowels</button>
         <button style={btnStyle} onClick={() => setStrResult(isPalindrome(strInput) ? '✓ palindromo' : '✗ non palindromo')}>isPalindrome</button>
         {strResult !== null && <div style={outputStyle}>{strResult}</div>}
+      </section>
+
+      {/* ── Registration Form (validator.ts) ── */}
+      <section style={sectionStyle}>
+        <span style={labelStyle}>validator.ts — Registration Form (non-happy path)</span>
+        <p style={{ fontSize: 12, color: '#666', marginTop: 0, marginBottom: 12 }}>
+          Questo form ha ~42 branch. Per coprirli tutti devi deliberatamente inserire input sbagliati:
+          email senza @, password troppo corta, username con caratteri speciali, ecc.
+        </p>
+
+        {regData.password && (() => {
+          const strength: 'weak' | 'fair' | 'strong' = getPasswordStrength(regData.password);
+          const strengthColor = { weak: '#c00', fair: '#b60', strong: '#060' } as const;
+          return (
+            <div style={{ marginBottom: 8, fontSize: 12, color: strengthColor[strength] }}>
+              Password strength: <strong>{strength}</strong>
+            </div>
+          );
+        })()}
+
+        {([
+          { key: 'email' as const, label: 'Email', type: 'text', placeholder: 'user@example.com' },
+          { key: 'username' as const, label: 'Username', type: 'text', placeholder: 'min 3, max 20, solo a-z0-9_' },
+          { key: 'password' as const, label: 'Password', type: 'password', placeholder: 'min 8, 1 uppercase, 1 numero' },
+          { key: 'confirmPassword' as const, label: 'Confirm password', type: 'password', placeholder: 'ripeti la password' },
+        ]).map(({ key, label, type, placeholder }) => (
+          <div key={key} style={{ marginBottom: 12 }}>
+            <label style={{ ...labelStyle, textTransform: 'none', letterSpacing: 0, fontSize: 12 }}>{label}</label>
+            <input
+              type={type}
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                padding: '5px 8px', borderRadius: 4,
+                border: `1px solid ${touched[key] && regErrors[key] ? '#c00' : '#bbb'}`,
+              }}
+              value={regData[key]}
+              onChange={handleRegChange(key)}
+              placeholder={placeholder}
+            />
+            {touched[key] && regErrors[key] && (
+              <div style={{ fontSize: 12, color: '#c00', marginTop: 3 }}>{regErrors[key]}</div>
+            )}
+          </div>
+        ))}
+
+        <button
+          style={{ ...btnStyle, background: '#222', color: '#fff', marginTop: 4 }}
+          onClick={handleRegSubmit}
+        >
+          Submit (usa validateRegistrationForm)
+        </button>
+
+        {regSubmitted && (
+          <div style={{ ...outputStyle, borderLeft: '3px solid #080', color: '#060', marginTop: 8 }}>
+            Registrazione completata — tutti i branch validi coperti
+          </div>
+        )}
       </section>
 
       <p style={{ fontSize: 12, color: '#aaa' }}>
