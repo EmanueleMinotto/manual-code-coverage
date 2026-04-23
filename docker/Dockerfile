@@ -26,7 +26,6 @@ COPY --from=builder /app/packages/server/dist ./packages/server/dist
 
 RUN pnpm install --frozen-lockfile --prod --filter @manual-code-coverage/server...
 
-VOLUME ["/app/data"]
 EXPOSE 3000
 
 ENV PORT=3000
