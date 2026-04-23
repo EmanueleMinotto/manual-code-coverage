@@ -1,6 +1,6 @@
 {
   "name": "@manual-code-coverage/cli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "CLI for manual-code-coverage: mcc report and mcc verify-pr commands",
   "type": "module",
   "main": "./dist/index.cjs",

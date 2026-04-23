@@ -17,7 +17,7 @@ vi.mock('@octokit/rest', () => ({
   })),
 }));
 
-import { runVerifyPr } from './verify-pr.js';
+import { runVerifyPr, buildComment } from './verify-pr.js';
 
 const COMMIT_SHA = 'sha-test-123';
 
@@ -98,9 +98,9 @@ describe('runVerifyPr', () => {
     expect(result.status).toBe('no-coverage');
   });
 
-  it('counts lines not in statementMap as covered when file has coverage data', async () => {
+  it('excludes non-instrumentable lines (imports) from coverage count', async () => {
     // patch adds line 1 (import, not in statementMap), line 2 (covered), line 4 (covered)
-    // line 1 is an import — module loaded, so it ran → covered
+    // line 1 is not in statementMap → excluded from count entirely
     const { Octokit } = await import('@octokit/rest');
     vi.mocked(Octokit).mockImplementationOnce(() => ({
       pulls: {
@@ -121,8 +121,8 @@ describe('runVerifyPr', () => {
     const result = await runVerifyPr(42, { ...COMMON_OPTS, threshold: 1.0 });
 
     expect(result.status).toBe('pass');
-    expect(result.totalModifiedLines).toBe(3); // line 1 counts as covered
-    expect(result.coveredModifiedLines).toBe(3);
+    expect(result.totalModifiedLines).toBe(2); // line 1 excluded, lines 2 and 4 counted
+    expect(result.coveredModifiedLines).toBe(2);
   });
 
   it('threshold boundary: pass at exact threshold', async () => {
@@ -132,5 +132,69 @@ describe('runVerifyPr', () => {
 
     expect(result.status).toBe('pass');
     expect(result.coveredRatio).toBe(0.5);
+  });
+});
+
+const BASE_RESULT = {
+  prNumber: 42,
+  commitSha: 'abc1234567890',
+  status: 'pass' as const,
+  threshold: 0.8,
+  coveredRatio: 1,
+  totalModifiedLines: 2,
+  coveredModifiedLines: 2,
+  uncoveredFiles: [],
+};
+
+describe('buildComment', () => {
+  it('omits session section when merged is null', () => {
+    const comment = buildComment(BASE_RESULT, 'owner/repo', null);
+    expect(comment).not.toContain('Sessions');
+  });
+
+  it('includes session count and testers from merged data', () => {
+    const merged = {
+      commitSha: 'abc1234567890',
+      mergedAt: '2026-04-23T10:30:00Z',
+      sessionIds: ['s1', 's2'],
+      coverage: {},
+      contributors: {
+        'src/app.ts': { 1: ['alice', 'bob'], 2: ['alice'] },
+      },
+    };
+    const comment = buildComment(BASE_RESULT, 'owner/repo', merged);
+    expect(comment).toContain('2 sessions');
+    expect(comment).toContain('alice');
+    expect(comment).toContain('bob');
+    expect(comment).toContain('2026-04-23 10:30 UTC');
+  });
+
+  it('shows singular "session" when there is only one', () => {
+    const merged = {
+      commitSha: 'abc1234567890',
+      mergedAt: '2026-04-23T10:30:00Z',
+      sessionIds: ['s1'],
+      coverage: {},
+      contributors: { 'src/app.ts': { 1: ['alice'] } },
+    };
+    const comment = buildComment(BASE_RESULT, 'owner/repo', merged);
+    expect(comment).toContain('1 session ·');
+    expect(comment).not.toContain('1 sessions');
+  });
+
+  it('deduplicates testers across files and lines', () => {
+    const merged = {
+      commitSha: 'abc1234567890',
+      mergedAt: '2026-04-23T10:30:00Z',
+      sessionIds: ['s1'],
+      coverage: {},
+      contributors: {
+        'src/a.ts': { 1: ['alice'], 2: ['alice', 'bob'] },
+        'src/b.ts': { 5: ['bob', 'carol'] },
+      },
+    };
+    const comment = buildComment(BASE_RESULT, 'owner/repo', merged);
+    const matches = comment.match(/alice/g) ?? [];
+    expect(matches.length).toBe(2); // once in summary, once in table
   });
 });

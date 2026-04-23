@@ -57,7 +57,7 @@ export async function runVerifyPr(
       coveredModifiedLines: 0,
       uncoveredFiles: changedFiles.map((f) => ({ path: f.path, uncoveredLines: f.addedLines })),
     };
-    if (opts.comment) await postPrComment(octokit, owner, repo, prNumber, result, repoSlug);
+    if (opts.comment) await postPrComment(octokit, owner, repo, prNumber, result, repoSlug, null);
     return result;
   }
 
@@ -114,7 +114,7 @@ export async function runVerifyPr(
     uncoveredFiles,
   };
 
-  if (opts.comment) await postPrComment(octokit, owner, repo, prNumber, result, repoSlug);
+  if (opts.comment) await postPrComment(octokit, owner, repo, prNumber, result, repoSlug, merged);
 
   return result;
 }
@@ -176,7 +176,25 @@ const STATUS_LABELS: Record<string, { icon: string; label: string }> = {
   'no-coverage': { icon: '⚠️', label: 'No coverage data' },
 };
 
-export function buildComment(result: VerificationResult, repoSlug: string): string {
+function formatUtc(iso: string): string {
+  return iso.replace('T', ' ').slice(0, 16) + ' UTC';
+}
+
+function uniqueTesters(contributors: MergedCoverage['contributors']): string[] {
+  const set = new Set<string>();
+  for (const lines of Object.values(contributors)) {
+    for (const testers of Object.values(lines)) {
+      for (const t of testers) set.add(t);
+    }
+  }
+  return [...set].sort();
+}
+
+export function buildComment(
+  result: VerificationResult,
+  repoSlug: string,
+  merged: MergedCoverage | null = null,
+): string {
   const { status, coveredRatio, threshold, coveredModifiedLines, totalModifiedLines, commitSha, uncoveredFiles } = result;
   const { icon, label } = STATUS_LABELS[status]!;
   const shortSha = commitSha.slice(0, 7);
@@ -209,6 +227,23 @@ export function buildComment(result: VerificationResult, repoSlug: string): stri
     `Commit: ${commitLink}`,
   ];
 
+  if (merged) {
+    const testers = uniqueTesters(merged.contributors);
+    const sessionCount = merged.sessionIds.length;
+    const testerList = testers.length > 0 ? testers.join(', ') : '—';
+    const summaryLine = `Sessions — ${sessionCount} session${sessionCount !== 1 ? 's' : ''} · testers: ${testerList}`;
+    lines.push(
+      '',
+      `<details><summary>${summaryLine}</summary>`,
+      '',
+      '| Sessions | Unique testers | Coverage merged at |',
+      '|----------|----------------|--------------------|',
+      `| ${sessionCount} | ${testerList} | ${formatUtc(merged.mergedAt)} |`,
+      '',
+      '</details>',
+    );
+  }
+
   if (uncoveredFiles.length > 0) {
     const totalUncovered = uncoveredFiles.reduce((sum, f) => sum + f.uncoveredLines.length, 0);
     lines.push('', `<details><summary>Uncovered lines (${totalUncovered})</summary>`, '', '| File | Lines |', '|------|-------|');
@@ -228,8 +263,9 @@ async function postPrComment(
   prNumber: number,
   result: VerificationResult,
   repoSlug: string,
+  merged: MergedCoverage | null = null,
 ): Promise<void> {
-  const body = buildComment(result, repoSlug);
+  const body = buildComment(result, repoSlug, merged);
 
   const { data: comments } = await octokit.issues.listComments({
     owner,

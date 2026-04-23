@@ -106,6 +106,36 @@ Exit code 0 = pass, 1 = fail or no coverage.
 }
 ```
 
+## PR Comment format
+
+When `--comment` is passed, `mcc verify-pr` posts (or updates) a comment on the pull request. The comment includes:
+
+- A status header (`✅ Passed` / `❌ Failed` / `⚠️ No coverage data`)
+- A progress bar with covered vs total modified lines
+- Coverage percentage vs threshold
+- A link to the HEAD commit
+
+If coverage data is available, two collapsible sections are appended:
+
+**Sessions** — collapsed by default, shows at a glance how many sessions were run and by whom:
+
+```
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  2 / 2 modified lines covered
+Coverage **100.0%** ≥ threshold **80.0%** ✅
+
+Commit: [`a1b2c3d`](https://github.com/owner/repo/commit/a1b2c3d...)
+
+▶ Sessions — 2 sessions · testers: alice, bob
+  | Sessions | Unique testers | Coverage merged at    |
+  |----------|----------------|-----------------------|
+  | 2        | alice, bob     | 2026-04-23 10:30 UTC  |
+
+▶ Uncovered lines (1)
+  | File       | Lines |
+  |------------|-------|
+  | src/app.ts | 42    |
+```
+
 ## GitHub Actions example
 
 ```yaml
