@@ -16,6 +16,10 @@ export function registerRoutes(
   app: FastifyInstance,
   storage: StorageProvider,
 ): void {
+  app.get('/health', async (_request, reply) => {
+    await reply.send({ status: 'ok' });
+  });
+
   app.post('/sessions', async (request, reply) => {
     const parsed = CreateSessionBodySchema.safeParse(request.body);
     if (!parsed.success) {
