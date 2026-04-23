@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import { calculate, type Operation } from './utils/calculator';
-import { decrement, double, increment, reset } from './utils/counter';
+import { clamp, decrement, double, increment, reset } from './utils/counter';
 import { countVowels, isPalindrome, reverse, toUpperCase } from './utils/strings';
 
 const sectionStyle: React.CSSProperties = {
@@ -71,6 +71,7 @@ export function App() {
         <button style={btnStyle} onClick={() => setCount(decrement(count))}>-1 decrement</button>
         <button style={btnStyle} onClick={() => setCount(double(count))}>×2 double</button>
         <button style={btnStyle} onClick={() => setCount(reset())}>reset</button>
+        <button style={btnStyle} onClick={() => setCount(clamp(count, 2, 8))}>clamp(2,8)</button>
         <div style={{ fontSize: 12, color: '#999', marginTop: 8 }}>
           decrement clamps a 0 — branch non raggiunto finché count {'>'} 0
         </div>

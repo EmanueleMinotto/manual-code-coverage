@@ -14,3 +14,9 @@ export function reset(): number {
 export function double(value: number): number {
   return value * 2;
 }
+
+export function clamp(value: number, min: number, max: number): number {
+  if (value < min) return min;
+  if (value > max) return max;
+  return value;
+}
