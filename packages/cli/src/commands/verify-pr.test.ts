@@ -98,6 +98,33 @@ describe('runVerifyPr', () => {
     expect(result.status).toBe('no-coverage');
   });
 
+  it('counts lines not in statementMap as covered when file has coverage data', async () => {
+    // patch adds line 1 (import, not in statementMap), line 2 (covered), line 4 (covered)
+    // line 1 is an import — module loaded, so it ran → covered
+    const { Octokit } = await import('@octokit/rest');
+    vi.mocked(Octokit).mockImplementationOnce(() => ({
+      pulls: {
+        get: vi.fn().mockResolvedValue({ data: { head: { sha: COMMIT_SHA } } }),
+        listFiles: vi.fn().mockResolvedValue({
+          data: [
+            {
+              filename: 'src/app.ts',
+              status: 'modified',
+              patch: '@@ -0,0 +1,4 @@\n+import foo from \'bar\';\n+added line 2\n line3\n+added line 4',
+            },
+          ],
+        }),
+      },
+    }) as never);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(FULL_MERGED) }));
+
+    const result = await runVerifyPr(42, { ...COMMON_OPTS, threshold: 1.0 });
+
+    expect(result.status).toBe('pass');
+    expect(result.totalModifiedLines).toBe(3); // line 1 counts as covered
+    expect(result.coveredModifiedLines).toBe(3);
+  });
+
   it('threshold boundary: pass at exact threshold', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(HALF_MERGED) }));
 
