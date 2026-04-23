@@ -11,6 +11,7 @@ export interface VerifyPrOptions {
   repo?: string;
   token?: string;
   allowNoCoverage?: boolean;
+  comment?: boolean;
 }
 
 export async function runVerifyPr(
@@ -56,6 +57,7 @@ export async function runVerifyPr(
       coveredModifiedLines: 0,
       uncoveredFiles: changedFiles.map((f) => ({ path: f.path, uncoveredLines: f.addedLines })),
     };
+    if (opts.comment) await postPrComment(octokit, owner, repo, prNumber, result, repoSlug);
     return result;
   }
 
@@ -93,7 +95,7 @@ export async function runVerifyPr(
   const coveredRatio = totalModifiedLines === 0 ? 1 : coveredModifiedLines / totalModifiedLines;
   const status = coveredRatio >= threshold ? 'pass' : 'fail';
 
-  return {
+  const result: VerificationResult = {
     prNumber,
     commitSha,
     status,
@@ -103,6 +105,10 @@ export async function runVerifyPr(
     coveredModifiedLines,
     uncoveredFiles,
   };
+
+  if (opts.comment) await postPrComment(octokit, owner, repo, prNumber, result, repoSlug);
+
+  return result;
 }
 
 function isLineCovered(
@@ -118,4 +124,106 @@ function isLineCovered(
     }
   }
   return false;
+}
+
+function linesToRanges(lines: readonly number[]): string {
+  if (lines.length === 0) return '';
+  const sorted = [...lines].sort((a, b) => a - b);
+  const ranges: string[] = [];
+  let start = sorted[0]!;
+  let end = sorted[0]!;
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i]! === end + 1) {
+      end = sorted[i]!;
+    } else {
+      ranges.push(start === end ? `${start}` : `${start}–${end}`);
+      start = end = sorted[i]!;
+    }
+  }
+  ranges.push(start === end ? `${start}` : `${start}–${end}`);
+  return ranges.join(', ');
+}
+
+function buildProgressBar(ratio: number, width = 20): string {
+  const filled = Math.round(Math.max(0, Math.min(1, ratio)) * width);
+  return '▓'.repeat(filled) + '░'.repeat(width - filled);
+}
+
+const COMMENT_MARKER = '<!-- mcc-verify-pr -->';
+
+const STATUS_LABELS: Record<string, { icon: string; label: string }> = {
+  pass: { icon: '✅', label: 'Passed' },
+  fail: { icon: '❌', label: 'Failed' },
+  'no-coverage': { icon: '⚠️', label: 'No coverage data' },
+};
+
+export function buildComment(result: VerificationResult, repoSlug: string): string {
+  const { status, coveredRatio, threshold, coveredModifiedLines, totalModifiedLines, commitSha, uncoveredFiles } = result;
+  const { icon, label } = STATUS_LABELS[status]!;
+  const shortSha = commitSha.slice(0, 7);
+  const commitLink = `[\`${shortSha}\`](https://github.com/${repoSlug}/commit/${commitSha})`;
+
+  if (status === 'no-coverage') {
+    return [
+      COMMENT_MARKER,
+      `## ${icon} Manual Code Coverage — ${label}`,
+      '',
+      'No coverage report found for this commit.',
+      'Run the manual test session and upload coverage before merging.',
+      '',
+      `Commit: ${commitLink}`,
+    ].join('\n');
+  }
+
+  const pct = (coveredRatio * 100).toFixed(1);
+  const thr = (threshold * 100).toFixed(1);
+  const thresholdMet = coveredRatio >= threshold;
+  const bar = buildProgressBar(coveredRatio);
+
+  const lines = [
+    COMMENT_MARKER,
+    `## ${icon} Manual Code Coverage — ${label}`,
+    '',
+    `${bar}  ${coveredModifiedLines} / ${totalModifiedLines} modified lines covered`,
+    `Coverage **${pct}%** ${thresholdMet ? '≥' : '<'} threshold **${thr}%** ${thresholdMet ? '✅' : '❌'}`,
+    '',
+    `Commit: ${commitLink}`,
+  ];
+
+  if (uncoveredFiles.length > 0) {
+    const totalUncovered = uncoveredFiles.reduce((sum, f) => sum + f.uncoveredLines.length, 0);
+    lines.push('', `<details><summary>Uncovered lines (${totalUncovered})</summary>`, '', '| File | Lines |', '|------|-------|');
+    for (const f of uncoveredFiles) {
+      lines.push(`| \`${f.path}\` | ${linesToRanges(f.uncoveredLines)} |`);
+    }
+    lines.push('', '</details>');
+  }
+
+  return lines.join('\n');
+}
+
+async function postPrComment(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  prNumber: number,
+  result: VerificationResult,
+  repoSlug: string,
+): Promise<void> {
+  const body = buildComment(result, repoSlug);
+
+  const { data: comments } = await octokit.issues.listComments({
+    owner,
+    repo,
+    issue_number: prNumber,
+    per_page: 100,
+  });
+
+  const existing = comments.find((c) => c.body?.includes(COMMENT_MARKER));
+
+  if (existing) {
+    await octokit.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+  } else {
+    await octokit.issues.createComment({ owner, repo, issue_number: prNumber, body });
+  }
 }

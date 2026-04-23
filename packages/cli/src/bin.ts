@@ -28,6 +28,7 @@ program
   .option('--token <token>', 'GitHub token')
   .option('--allow-no-coverage', 'Exit 0 when no coverage data exists')
   .option('--json', 'Output JSON result')
+  .option('--comment', 'Post (or update) a summary comment on the PR')
   .action(
     async (
       prNumberStr: string,
@@ -38,6 +39,7 @@ program
         token?: string;
         allowNoCoverage?: boolean;
         json?: boolean;
+        comment?: boolean;
       },
     ) => {
       const prNumber = Number(prNumberStr);
